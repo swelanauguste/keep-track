@@ -1,0 +1,102 @@
+<!-- templates/transactions/account_list.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Accounts</h2>
+        <!-- Button trigger modal -->
+        <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addAccountModal">
+            Add Account
+        </button>
+    </div>
+    <div class="list-group">
+        {% for account in accounts %}
+        <a href="{% url 'account_detail' account.id %}"
+            class="list-group-item list-group-item-action">
+            <h5 class="mb-1">{{ account.name }}</h5>
+            <p class="mb-1">Balance: ${{ account.balance }}</p>
+            <small class="text-muted">Last updated: {{ account.updated_at
+                }}</small>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade"
+    id="addAccountModal"
+    tabindex="-1"
+    aria-labelledby="addAccountModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"
+                    id="addAccountModalLabel">Add Account</h5>
+                <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAccountForm"
+                    method="post"
+                    action="{% url 'add_account' %}">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Close</button>
+                <button type="submit"
+                    class="btn btn-primary"
+                    form="addAccountForm">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- Add this script at the bottom of account_list.html or in a separate JS file -->
+<script>
+    document.getElementById('addAccountForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const form = this;
+        const url = form.action;
+        const formData = new FormData(form);
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    // Handle errors
+                    const errors = data.errors;
+                    for (let field in errors) {
+                        const fieldElement = form.querySelector(`[name=${field}]`);
+                        if (fieldElement) {
+                            const errorElement = document.createElement('div');
+                            errorElement.classList.add('invalid-feedback');
+                            errorElement.textContent = errors[field];
+                            fieldElement.classList.add('is-invalid');
+                            fieldElement.parentNode.appendChild(errorElement);
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+</script>
